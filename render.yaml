@@ -11,5 +11,3 @@ services:
         sync: false
       - key: MODEL_NAME
         value: llama-3.3-70b-versatile
-    autoDeploy: true
-    healthCheckPath: /health

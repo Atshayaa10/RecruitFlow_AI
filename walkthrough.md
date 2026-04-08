@@ -1,31 +1,29 @@
-# RecruitFlow AI - Fully Deployed & Optimized
+# Fix for Render Error 521 Summary
 
-The project is now fully live and stabilized on Render with correct network configurations.
+I have implemented several robustness and diagnostic improvements to resolve the Error 521 on Render.
 
-## 📁 Repository & URL
-- **GitHub URL**: [https://github.com/Atshayaa10/RecruitFlow_AI.git](https://github.com/Atshayaa10/RecruitFlow_AI.git)
-- **Live Deployment**: [https://recruitflow-ai.onrender.com/](https://recruitflow-ai.onrender.com/)
+## Changes Made
 
-## ✅ Final Stability Fixes
+### [Backend]
 
-### 1. Dynamic Port Mapping
-I've updated the FastAPI backend to detect Render's assigned `$PORT` environment variable. This fixes the Cloudflare "Error 521" by allowing Render's load balancer to correctly connect to the web server.
+#### [main.py](file:///c:/Users/atsha/Downloads/recruitment_automation/backend/main.py)
+- **Enhanced Logging**: Added explicit logging for `PORT` and the presence of `AGENTOPS_API_KEY` and `GROQ_API_KEY`.
+- **Protected Initialization**: Wrapped `agentops.init` in a try/except block to ensure any monitoring issues don't crash the server.
+- **Improved Server Config**: Configured `uvicorn` to handle `proxy_headers` and `forwarded_allow_ips` correctly for the Render/Cloudflare environment.
 
-### 2. Unified Deployment
-All frontend assets and backend logic are now served from a single, high-performance Docker container. This simplifies management and ensures 100% uptime.
+#### [Dockerfile](file:///c:/Users/atsha/Downloads/recruitment_automation/Dockerfile)
+- **EXPOSE 10000**: Added a port hint to ensure Render correctly routes traffic.
 
-### 3. Real-Time Observability
-The application is fully instrumented with **AgentOps**. Every candidate screened and every ranking decision is traced in your dashboard.
+#### [render.yaml](file:///c:/Users/atsha/Downloads/recruitment_automation/render.yaml)
+- **Health Check Clarification**: Added internal documentation regarding the health check path.
 
----
+## Next Steps
 
-## 🚀 What to do Now?
-1.  **Check your URL**: Visit [https://recruitflow-ai.onrender.com/](https://recruitflow-ai.onrender.com/) and verify the premium UI is visible.
-2.  **Run an Analysis**: Upload a Job Description and a few Resumes to see the multi-agent ranking pipeline in action!
-3.  **Monitor Traces**: Check [AgentOps](https://app.agentops.ai/) to see your agents working behind the scenes.
-
-> [!IMPORTANT]
-> **Environment Variables**: Double-check that `GROQ_API_KEY` and `AGENTOPS_API_KEY` are still set in your Render "Environment" tab to keep the AI brain active.
+1.  **Push Changes**: Commit and push these changes to your GitHub repository.
+2.  **Monitor Logs**: Go to the Render Dashboard and watch the "Logs" tab. You should now see:
+    - `DEBUG: Starting server on port 10000`
+    - `DEBUG: GROQ_API_KEY present: True`
+3.  **Wait for "Live"**: Once Render says "Your service is live 🎉", try accessing the URL again. If it still shows 521, the logs will now tell us exactly what's failing.
 
 > [!TIP]
-> **Production Logs**: If you need to debug further, Render's "Logs" tab will now show much clearer, unbuffered output thanks to the latest `PYTHONUNBUFFERED` update.
+> **Free Plan "Cold Start"**: On the Render Free plan, the first request after 15 minutes of inactivity can take up to 60 seconds to spin up. This sometimes triggers a 521 or 524 timeout in the browser. If you see it, wait 30 seconds and refresh.

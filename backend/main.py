@@ -23,11 +23,21 @@ from datetime import datetime
 # Initialize AgentOps at the very beginning
 load_dotenv()
 AGENTOPS_API_KEY = os.getenv("AGENTOPS_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
+print(f"DEBUG: AGENTOPS_API_KEY present: {bool(AGENTOPS_API_KEY)}")
+print(f"DEBUG: GROQ_API_KEY present: {bool(GROQ_API_KEY)}")
 
 # Nuclear Stabilization: Disable all magic/automatic instrumentors to stop circular import crashes.
 # We will rely on our manual decorators (@agentops.track_tool) in agents.py.
 if AGENTOPS_API_KEY:
-    agentops.init(api_key=AGENTOPS_API_KEY, default_tags=["recruitment-automation"], instrument_llm_calls=False)
+    try:
+        agentops.init(api_key=AGENTOPS_API_KEY, default_tags=["recruitment-automation"], instrument_llm_calls=False)
+        print("DEBUG: AgentOps initialized successfully.")
+    except Exception as e:
+        print(f"WARNING: AgentOps failed to initialize: {e}")
+else:
+    print("WARNING: AGENTOPS_API_KEY not found. Monitoring disabled.")
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -191,5 +201,13 @@ if os.path.exists(FRONTEND_DIR):
 
 if __name__ == "__main__":
     # Use Render's dynamic PORT environment variable (default to 8000 for local)
-    port = int(os.getenv("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    port_str = os.getenv("PORT", "8000")
+    print(f"DEBUG: Starting server on port {port_str}")
+    port = int(port_str)
+    uvicorn.run(
+        "main:app", 
+        host="0.0.0.0", 
+        port=port, 
+        proxy_headers=True, 
+        forwarded_allow_ips="*"
+    )
