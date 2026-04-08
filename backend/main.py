@@ -188,4 +188,6 @@ if os.path.exists(FRONTEND_DIR):
 # but handled above for unified cloud deployment.
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Use Render's dynamic PORT environment variable (default to 8000 for local)
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)

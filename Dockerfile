@@ -22,10 +22,8 @@ WORKDIR /app/backend
 # Create a placeholder for the database
 RUN touch /app/backend/recruitment.db
 
-EXPOSE 8000
-
-# Set environment variable to ensure logs are visible
+# Ensure logs are visible and real-time
 ENV PYTHONUNBUFFERED=1
 
-# Start FastAPI
+# Start FastAPI - using the python entrypoint which now handles the PORT dynamic mapping
 CMD ["python", "main.py"]
