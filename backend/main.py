@@ -1,65 +1,29 @@
-import sys
-import logging
-
-# Silence AgentOps logging to prevent the emoji-induced crash during init on Windows
-# (Charmap cannot encode the 'Thinking Face' emoji AgentOps uses in logs)
-logging.getLogger("agentops").setLevel(logging.ERROR)
-
-# Comprehensive UTF-8 wrap for Windows to prevent other emoji-logging crashes
-# if sys.platform == "win32":
-#     import codecs
-#     if hasattr(sys.stdout, 'detach'):
-#         sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
-#     if hasattr(sys.stderr, 'detach'):
-#         sys.stderr = codecs.getwriter("utf-8")(sys.stderr.detach())
-
 import os
 import time
-from dotenv import load_dotenv
-from typing import TypedDict, List, Annotated, Optional
+import logging
+import traceback
 from datetime import datetime
-
-# --- AGENTOPS REMOVED FOR STABILITY ---
-print("DEBUG: AgentOps has been completely removed from the pipeline.")
+from typing import List, Optional
+from pathlib import Path
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
-from typing import List, Optional
 from pydantic import BaseModel
 import uvicorn
-import traceback
 
-# --- Imports and AgentOps Init ---
-try:
-    from agents import recruitment_pipeline
-    print("DEBUG: Agents pipeline loaded successfully.")
-except Exception as e:
-    print(f"CRITICAL ERROR loading agents: {e}")
-    traceback.print_exc()
-    recruitment_pipeline = None
+# --- Minimal Configuration ---
+# Absolute path resolution
+BASE_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIR = Path("/app/frontend")
 
-from utils import extract_text_from_pdf
 from database import init_db, save_analysis, get_history, get_analysis_detail
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, HTMLResponse
-import os
+from utils import extract_text_from_pdf
 
 # Initialize DB on startup
 init_db()
 
 app = FastAPI(title="RecruitFlow AI API")
-
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    error_msg = f"CRITICAL ERROR: {exc}\n{traceback.format_exc()}"
-    with open("debug_backend.log", "a", encoding="utf-8") as f:
-        f.write(f"\n[{datetime.now()}] {error_msg}\n")
-    print(error_msg)
-    return JSONResponse(
-        status_code=500,
-        content={"status": "error", "message": str(exc)},
-    )
 
 # Configure CORS
 app.add_middleware(
@@ -70,36 +34,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from pathlib import Path
-
-# Absolute path resolution
-BASE_DIR = Path(__file__).resolve().parent.parent
-# Hardcoded container path for maximum reliability on Render
-FRONTEND_DIR = Path("/app/frontend")
-print(f"DEBUG: FRONTEND_DIR set to {FRONTEND_DIR}")
-
-@app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
-def read_root(request: Request):
-    # If it's a HEAD request (like Render's health check), just return 200 OK
-    if request.method == "HEAD":
-        return HTMLResponse(content="", status_code=200)
-
+@app.get("/")
+def read_root():
     index_path = FRONTEND_DIR / "index.html"
     if index_path.exists():
         return FileResponse(index_path)
-    
-    # Fallback for absolute container path
-    fallback_path = Path("/app/frontend/index.html")
-    if fallback_path.exists():
-        return FileResponse(fallback_path)
-
-    return f"RecruitFlow AI API is running. Frontend not found. Checked: {index_path} and {fallback_path}"
+    return "RecruitFlow AI API is running. Frontend not found in /app/frontend"
 
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
 
-# History endpoints
 @app.get("/history")
 async def fetch_history(user_id: str = "default_user"):
     return {"status": "success", "data": get_history(user_id)}
@@ -111,35 +56,31 @@ async def fetch_detail(analysis_id: int):
         raise HTTPException(status_code=404, detail="Analysis not found")
     return {"status": "success", "data": detail}
 
-class JobDescription(BaseModel):
-    jd_text: str
-
 @app.post("/analyze")
 async def analyze_recruitment(
     jd_text: str = Form(...),
     resume_files: List[UploadFile] = File(...)
 ):
-    with open("debug_backend.log", "a", encoding="utf-8") as f:
-        f.write(f"\n[{datetime.now()}] Received request with {len(resume_files)} files\n")
+    print(f"[{datetime.now()}] Request received: {len(resume_files)} files")
+    
+    # LAZY LOADING: Load agents only when needed to save memory during boot
+    try:
+        from agents import recruitment_pipeline
+    except Exception as e:
+        print(f"ERROR: Could not load agents pipeline: {e}")
+        raise HTTPException(status_code=500, detail="AI Pipeline failed to load")
+
     try:
         resumes_data = []
         for resume_file in resume_files:
-            print(f"DEBUG: Extracting text from PDF: {resume_file.filename}...")
             resume_bytes = await resume_file.read()
             resume_text = extract_text_from_pdf(resume_bytes)
-            
             if resume_text:
-                resumes_data.append({
-                    "filename": resume_file.filename,
-                    "text": resume_text
-                })
-            else:
-                print(f"WARNING: Could not extract text from {resume_file.filename}")
+                resumes_data.append({"filename": resume_file.filename, "text": resume_text})
 
         if not resumes_data:
-            raise HTTPException(status_code=400, detail="Could not extract text from any provided PDF Resumes")
+            raise HTTPException(status_code=400, detail="Could not extract text from any PDF")
 
-        # Prepare state for the recruitment graph
         initial_state = {
             "job_description": jd_text,
             "resumes": resumes_data,
@@ -149,11 +90,8 @@ async def analyze_recruitment(
             "messages": []
         }
         
-        # Run the LangGraph workflow
         result = recruitment_pipeline.invoke(initial_state)
 
-        # Prepare results for saving
-        # For the history list, we'll use the top candidate and their score
         ranked_list = result.get("ranked_shortlist")
         top_resume_name = "Multi-Batch Analysis"
         top_match_percentage = 0
@@ -163,43 +101,14 @@ async def analyze_recruitment(
             top_resume_name = f"{top_candidate['name']} & Others"
             top_match_percentage = top_candidate['score']
 
-        # Save to Database
-        user_id = "default_user" 
-        save_analysis(user_id, jd_text, top_resume_name, top_match_percentage, result)
-
-        # Mark session as success explicitly (Internal status)
-        print(f"[{datetime.now()}] Analysis completed successfully")
-
-        return {
-            "status": "success",
-            "data": result
-        }
+        save_analysis("default_user", jd_text, top_resume_name, top_match_percentage, result)
+        return {"status": "success", "data": result}
+        
     except Exception as e:
         print(f"Error during analysis: {e}")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-# Serve static files (if any in a separate folder inside frontend)
-if os.path.exists(FRONTEND_DIR):
-    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
-
-# Frontend mounting removed as it is served by Nginx in local Docker setup,
-# but handled above for unified cloud deployment.
-
 if __name__ == "__main__":
-    # Use Render's dynamic PORT environment variable (default to 8000 for local)
-    port_str = os.getenv("PORT", "8000")
-    print(f"DEBUG: Starting server on port {port_str}")
-    
-    try:
-        port = int(port_str)
-        uvicorn.run(
-            app,  # Pass the app object directly
-            host="0.0.0.0", 
-            port=port, 
-            proxy_headers=True, 
-            forwarded_allow_ips="*"
-        )
-    except Exception as e:
-        print(f"CRITICAL ERROR during server startup: {e}")
-        traceback.print_exc()
+    port = int(os.getenv("PORT", 10000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
