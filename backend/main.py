@@ -48,7 +48,14 @@ import uvicorn
 import traceback
 
 # --- Imports and AgentOps Init ---
-from agents import recruitment_pipeline
+try:
+    from agents import recruitment_pipeline
+    print("DEBUG: Agents pipeline loaded successfully.")
+except Exception as e:
+    print(f"CRITICAL ERROR loading agents: {e}")
+    traceback.print_exc()
+    recruitment_pipeline = None
+
 from utils import extract_text_from_pdf
 from database import init_db, save_analysis, get_history, get_analysis_detail
 from fastapi.staticfiles import StaticFiles
@@ -203,11 +210,16 @@ if __name__ == "__main__":
     # Use Render's dynamic PORT environment variable (default to 8000 for local)
     port_str = os.getenv("PORT", "8000")
     print(f"DEBUG: Starting server on port {port_str}")
-    port = int(port_str)
-    uvicorn.run(
-        "main:app", 
-        host="0.0.0.0", 
-        port=port, 
-        proxy_headers=True, 
-        forwarded_allow_ips="*"
-    )
+    
+    try:
+        port = int(port_str)
+        uvicorn.run(
+            app,  # Pass the app object directly
+            host="0.0.0.0", 
+            port=port, 
+            proxy_headers=True, 
+            forwarded_allow_ips="*"
+        )
+    except Exception as e:
+        print(f"CRITICAL ERROR during server startup: {e}")
+        traceback.print_exc()
