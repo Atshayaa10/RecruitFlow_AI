@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0d0d0d;
+  --foreground: #ececec;
+  --sidebar-bg: #171717;
+  --message-user: #2f2f2f;
+  --message-ai: transparent;
+  --accent: #10a37f; /* ChatGPT Green */
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+@layer components {
+  .chat-container {
+    @apply flex flex-col h-screen overflow-hidden;
+  }
+  
+  .sidebar {
+    @apply w-64 bg-[#171717] h-full hidden md:flex flex-col border-r border-[#262626];
+  }
+  
+  .message-area {
+    @apply flex-1 overflow-y-auto p-4 space-y-6 scrollbar-thin scrollbar-thumb-zinc-700;
+  }
+  
+  .message-bubble {
+    @apply max-w-3xl mx-auto flex gap-4 p-4 rounded-xl;
+  }
+  
+  .user-message {
+    @apply bg-[#2f2f2f];
+  }
+  
+  .ai-message {
+    @apply bg-transparent;
+  }
+  
+  .input-container {
+    @apply max-w-3xl mx-auto w-full p-4 pb-8;
+  }
+  
+  .input-box {
+    @apply bg-[#2f2f2f] border border-[#4d4d4d] rounded-2xl p-4 flex flex-col gap-2 focus-within:border-zinc-500 transition-colors;
+  }
+  
+  .btn-primary {
+    @apply bg-[#10a37f] hover:bg-[#1a7f64] text-white px-4 py-2 rounded-lg font-medium transition-all;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #444;
+}

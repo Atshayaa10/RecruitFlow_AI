@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full antialiased dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RecruitFlow AI | Premium Recruitment Intelligence</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Axios -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <style>
+        :root {
+            --bg-main: #212121;
+            --bg-sidebar: #171717;
+            --bg-input: #2f2f2f;
+            --accent: #10a37f;
+            --accent-hover: #1a7f64;
+            --text-main: #ececec;
+            --text-muted: #b4b4b4;
+            --border: #333333;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+        }
+
+        .header-font { font-family: 'Outfit', sans-serif; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        .sidebar-item {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sidebar-item:hover {
+            background-color: #2f2f2f;
+        }
+
+        .glass {
+            background: rgba(47, 47, 47, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .input-gradient {
+            background: linear-gradient(180deg, rgba(33, 33, 33, 0) 0%, #212121 50%);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade { animation: fadeIn 0.4s ease-out forwards; }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="h-full flex overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-[260px] bg-[#171717] h-full hidden md:flex flex-col border-r border-white/5 z-20">
+        <div class="p-3">
+            <button onclick="newChat()" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium border border-white/10 hover:border-white/20 transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+                New Analysis
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto px-3 py-2 space-y-6">
+            <div>
+                <p class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-3 mb-2">Recent</p>
+                <div id="history-container" class="space-y-0.5">
+                    <!-- History Items Here -->
+                     <div class="text-xs text-zinc-600 px-3 py-4 italic">No history yet</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Section -->
+        <div class="p-3 border-t border-white/5">
+            <div id="login-container" class="space-y-2">
+                <div id="g_id_onload"
+                    data-client_id="476206480359-96dpp8i08qv3cfp3fpurqhlj1r685dsr.apps.googleusercontent.com"
+                    data-context="signin"
+                    data-ux_mode="popup"
+                    data-callback="handleCredentialResponse"
+                    data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin"
+                    data-type="standard"
+                    data-shape="rectangular"
+                    data-theme="outline"
+                    data-text="continue_with"
+                    data-size="large"
+                    data-logo_alignment="left">
+                </div>
+            </div>
+            
+            <div id="user-profile" class="hidden flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+                <img id="user-avatar" src="" class="w-8 h-8 rounded-full border border-white/10" alt="Avatar">
+                <div class="flex-1 overflow-hidden">
+                    <p id="user-name" class="text-sm font-medium truncate">User Name</p>
+                </div>
+                <button onclick="logout()" class="text-zinc-500 hover:text-red-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col relative bg-[#212121]">
+        <!-- Mobile Header -->
+        <header class="md:hidden flex items-center justify-between p-4 border-b border-white/5">
+            <button class="p-2"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+            <h1 class="header-font font-bold">RecruitFlow AI</h1>
+            <div class="w-8"></div>
+        </header>
+
+        <!-- Dynamic Chat/Welcome Area -->
+        <div id="chat-scroller" class="flex-1 overflow-y-auto scroll-smooth">
+            <div id="welcome-screen" class="h-full flex flex-col items-center justify-center p-6 text-center">
+                <div class="w-12 h-12 bg-white text-black rounded-full flex items-center justify-center mb-6 shadow-2xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>
+                </div>
+                <h1 class="text-3xl font-bold header-font mb-8">Ready when you are.</h1>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl w-full">
+                    <button onclick="setInputText('Analyze this Senior Dev JD for Python proficiency')" class="p-4 border border-white/10 rounded-xl text-left hover:bg-white/5 transition-colors group">
+                        <p class="text-sm font-medium mb-1">Analyze Developer JD</p>
+                        <p class="text-xs text-zinc-500 group-hover:text-zinc-400">Scan for specific technical proficiencies...</p>
+                    </button>
+                    <button onclick="setInputText('Screen this Product Manager resume for Agile experience')" class="p-4 border border-white/10 rounded-xl text-left hover:bg-white/5 transition-colors group">
+                        <p class="text-sm font-medium mb-1">Screen Resume Gaps</p>
+                        <p class="text-xs text-zinc-500 group-hover:text-zinc-400">Detect missing core competencies...</p>
+                    </button>
+                </div>
+            </div>
+
+            <div id="message-container" class="hidden max-w-3xl mx-auto py-12 px-6 space-y-10">
+                <!-- Analysis Messages will appear here -->
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-4 md:pb-12 input-gradient">
+            <div class="max-w-3xl mx-auto relative group">
+                <div id="loading-bar" class="absolute -top-1 left-0 h-0.5 bg-accent w-0 transition-all duration-300 rounded-full"></div>
+                
+                <div class="relative bg-zinc-800/50 border border-white/10 rounded-3xl p-4 focus-within:border-white/20 transition-all shadow-2xl">
+                    <textarea 
+                        id="jd-input"
+                        rows="1"
+                        placeholder="Paste Job Description here..."
+                        oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"
+                        class="w-full bg-transparent border-none focus:outline-none resize-none px-4 py-2 text-[15px] max-h-[200px] overflow-y-auto"
+                    ></textarea>
+
+                    <div id="file-chips" class="hidden flex flex-wrap gap-2 px-4 mb-3 animate-fade">
+                        <!-- File Chips will appear here -->
+                    </div>
+
+                    <div class="flex items-center justify-between px-2 pt-2">
+                        <div class="flex items-center gap-2">
+                            <input type="file" id="file-input" hidden accept=".pdf" multiple onchange="handleFileSelect(this)">
+                            <button onclick="document.getElementById('file-input').click()" class="p-2 text-zinc-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Attach Resume (PDF)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.51a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                            </button>
+                        </div>
+                        <button id="send-btn" onclick="analyze()" disabled class="p-2 bg-accent hover:bg-accent-hover text-white rounded-xl transition-all disabled:bg-zinc-700 disabled:text-zinc-500 shadow-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"></path><path d="M12 19V5"></path></svg>
+                        </button>
+                    </div>
+                </div>
+                <p class="text-[10px] text-center text-zinc-500 mt-4 font-medium">RecruitFlow AI can make mistakes. Verify important info.</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let selectedFiles = [];
+        let userData = null;
+
+        // Initialize App
+        window.onload = () => {
+            fetchHistory();
+            checkInput();
+        };
+
+        function setInputText(text) {
+            const input = document.getElementById('jd-input');
+            input.value = text;
+            input.style.height = ''; 
+            input.style.height = input.scrollHeight + 'px';
+            checkInput();
+        }
+
+        const inputDom = document.getElementById('jd-input');
+        inputDom.addEventListener('input', checkInput);
+
+        function checkInput() {
+            const btn = document.getElementById('send-btn');
+            btn.disabled = !(inputDom.value.trim() && selectedFiles.length > 0);
+        }
+
+        function handleFileSelect(input) {
+            const newFiles = Array.from(input.files);
+            // Append and filter duplicates by name/size
+            const uniqueFiles = newFiles.filter(nf => 
+                !selectedFiles.some(sf => sf.name === nf.name && sf.size === nf.size)
+            );
+            selectedFiles = [...selectedFiles, ...uniqueFiles];
+            renderFileChips();
+            checkInput();
+            
+            // Reset input so the same file can be selected again if removed
+            input.value = '';
+        }
+
+        function renderFileChips() {
+            const container = document.getElementById('file-chips');
+            if (selectedFiles.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+            container.innerHTML = selectedFiles.map((file, index) => `
+                <div class="flex items-center gap-2 px-3 py-1.5 bg-accent/20 border border-accent/30 rounded-full w-fit animate-fade">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-accent"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path></svg>
+                    <span class="text-[10px] font-bold text-accent uppercase tracking-wider truncate max-w-[100px]">${file.name}</span>
+                    <button onclick="removeFile(${index})" class="text-accent hover:text-white"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+                </div>
+            `).join('');
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            renderFileChips();
+            checkInput();
+        }
+
+        function clearFiles() {
+            selectedFiles = [];
+            document.getElementById('file-input').value = '';
+            document.getElementById('file-chips').classList.add('hidden');
+            checkInput();
+        }
+
+        async function fetchHistory() {
+            try {
+                const response = await axios.get('/history');
+                const history = response.data.data;
+                const container = document.getElementById('history-container');
+                
+                if (history.length === 0) {
+                    container.innerHTML = '<div class="text-xs text-zinc-600 px-3 py-4 italic">No history yet</div>';
+                    return;
+                }
+
+                container.innerHTML = history.map(item => `
+                    <button onclick="loadHistoryDetail(${item.id})" class="sidebar-item w-full text-left px-3 py-2.5 rounded-lg text-sm truncate group flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-zinc-500"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect></svg>
+                        <div class="flex-1 truncate">
+                            <span class="block truncate">${item.resume_name}</span>
+                            <span class="text-[10px] text-zinc-500">${item.match_percentage}% Match</span>
+                        </div>
+                    </button>
+                `).join('');
+            } catch (err) {
+                console.error("History fetch failed", err);
+            }
+        }
+
+        function newChat() {
+            // "Save" is automatic on /analyze, so we just clear screen
+            document.getElementById('message-container').innerHTML = '';
+            document.getElementById('message-container').classList.add('hidden');
+            document.getElementById('welcome-screen').classList.remove('hidden');
+            document.getElementById('jd-input').value = '';
+            clearFiles();
+            fetchHistory();
+        }
+
+        async function analyze() {
+            const jdText = document.getElementById('jd-input').value;
+            if (!jdText || selectedFiles.length === 0) return;
+
+            // UI State
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('message-container').classList.remove('hidden');
+            document.getElementById('loading-bar').style.width = '70%';
+            
+            const btn = document.getElementById('send-btn');
+            btn.disabled = true;
+
+            // Add User Message
+            addMessage('user', `Analyzing ${selectedFiles.length} candidate(s) for: ${jdText.substring(0, 150)}...`);
+
+            const formData = new FormData();
+            formData.append('jd_text', jdText);
+            selectedFiles.forEach(file => {
+                formData.append('resume_files', file);
+            });
+
+            try {
+                const response = await axios.post('/analyze', formData);
+                document.getElementById('loading-bar').style.width = '100%';
+                setTimeout(() => document.getElementById('loading-bar').style.width = '0', 500);
+                
+                renderResult(response.data.data);
+                fetchHistory(); // Update history list
+            } catch (err) {
+                console.error("Analysis failed:", err);
+                const errorDetail = err.response ? ` (Status: ${err.response.status})` : '';
+                addMessage('ai', 'Error connecting to the analysis server. Please try again.' + errorDetail);
+                document.getElementById('loading-bar').style.width = '0';
+            } finally {
+                btn.disabled = false;
+                document.getElementById('jd-input').value = '';
+                clearFiles();
+            }
+        }
+
+        function addMessage(role, content) {
+            const container = document.getElementById('message-container');
+            const isUser = role === 'user';
+            
+            const html = `
+                <div class="flex gap-4 md:gap-6 animate-fade">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isUser ? 'bg-zinc-700' : 'bg-accent text-white'}">
+                        ${isUser ? `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>` : `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path></svg>`}
+                    </div>
+                    <div class="flex-1 space-y-2 overflow-hidden">
+                        <p class="text-sm font-bold header-font uppercase tracking-tighter">${isUser ? 'You' : 'RecruitFlow AI'}</p>
+                        <div class="text-[15px] leading-relaxed text-zinc-300">${content}</div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+            scrollToBottom();
+        }
+
+        function renderResult(data) {
+            const rankedList = data.ranked_shortlist;
+            const candidates = data.candidates;
+
+            const shortlistHtml = rankedList.top_candidates.map(c => `
+                <div class="p-4 bg-zinc-800/30 border border-white/5 rounded-2xl flex items-center gap-4 hover:border-accent/30 transition-colors cursor-pointer" onclick="toggleDetails('${c.filename.replace(/[^a-zA-Z0-9]/g, '')}')">
+                    <div class="w-10 h-10 bg-accent/20 rounded-full flex items-center justify-center text-accent font-bold">${c.rank}</div>
+                    <div class="flex-1">
+                        <p class="font-bold text-[15px]">${c.name}</p>
+                        <p class="text-[11px] text-zinc-500 uppercase tracking-widest">${c.filename}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xl font-black text-accent">${c.score}%</p>
+                        <p class="text-[9px] text-zinc-500 uppercase font-bold">Match</p>
+                    </div>
+                </div>
+                <div id="details-${c.filename.replace(/[^a-zA-Z0-9]/g, '')}" class="hidden mt-2 p-6 bg-zinc-900/50 rounded-2xl border border-white/5 animate-fade space-y-6">
+                    ${renderCandidateDetails(candidates.find(cand => cand.filename === c.filename))}
+                </div>
+            `).join('<div class="h-2"></div>');
+
+            const content = `
+                <div class="space-y-6">
+                    <div class="p-6 bg-accent/10 border border-accent/20 rounded-3xl">
+                        <h3 class="header-font text-xl font-bold mb-2">Ranked Shortlist</h3>
+                        <p class="text-sm text-zinc-400 mb-6">${rankedList.summary}</p>
+                        <div class="space-y-3">
+                            ${shortlistHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+            addMessage('ai', content);
+
+            // Reset input height
+            const input = document.getElementById('jd-input');
+            input.style.height = 'auto';
+        }
+
+        function renderCandidateDetails(candidate) {
+            const score = candidate.score_report;
+            const resume = candidate.parsed_resume;
+            
+            let recommendationHtml = candidate.recommendation;
+            // Enhanced list detection for numbers, bullets (*), or dashes (-)
+            if (recommendationHtml.match(/(\d\.\s|\*\s|-\s)/)) {
+                const parts = recommendationHtml.split(/(\d\.\s|\*\s|-\s)/).filter(p => p.trim() && !p.match(/(\d\.\s|\*\s|-\s)/));
+                recommendationHtml = `<ul class="list-disc pl-5 space-y-3 font-medium text-zinc-200">
+                    ${parts.map(p => `<li>${p.trim()}</li>`).join('')}
+                </ul>`;
+            } else {
+                recommendationHtml = `<p class="leading-relaxed whitespace-pre-wrap">${recommendationHtml}</p>`;
+            }
+
+            return `
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-4 bg-zinc-800/50 rounded-xl">
+                        <p class="text-[10px] font-bold text-zinc-500 uppercase mb-1">Experience</p>
+                        <p class="text-lg font-bold">${resume.experience_years} Years</p>
+                    </div>
+                    <div class="p-4 bg-zinc-800/50 rounded-xl">
+                        <p class="text-[10px] font-bold text-zinc-500 uppercase mb-1">Qualified</p>
+                        <p class="text-lg font-bold ${score.qualified ? 'text-green-400' : 'text-yellow-400'}">${score.qualified ? 'Yes' : 'Gaps detected'}</p>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">Top Skills</h4>
+                    <div class="flex flex-wrap gap-2">
+                        ${resume.skills.map(s => `<span class="text-[11px] bg-white/5 px-2.5 py-1 rounded-md border border-white/5">${s}</span>`).join('')}
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-[10px] font-bold text-green-400 uppercase tracking-widest mb-3">Strengths</h4>
+                        <ul class="space-y-1.5">
+                            ${score.strengths.map(s => `<li class="text-[12px] text-zinc-300 flex items-start gap-2"><span class="text-green-500 mt-1">✓</span> ${s}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-3">Gaps Identified</h4>
+                        <ul class="space-y-1.5">
+                            ${score.gaps.map(g => `<li class="text-[12px] text-zinc-300 flex items-start gap-2"><span class="text-red-500 mt-1">!</span> ${g}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-[10px] font-bold text-accent uppercase tracking-widest mb-3">Interview Strategy</h4>
+                    <div class="text-[13px] text-zinc-300 leading-relaxed">${recommendationHtml}</div>
+                </div>
+            `;
+        }
+
+        function toggleDetails(id) {
+            const el = document.getElementById(`details-${id}`);
+            el.classList.toggle('hidden');
+        }
+
+        async function loadHistoryDetail(id) {
+            document.getElementById('welcome-screen').classList.add('hidden');
+            const container = document.getElementById('message-container');
+            container.innerHTML = '';
+            container.classList.remove('hidden');
+
+            try {
+                const response = await axios.get(`/history/${id}`);
+                renderResult(response.data.data);
+            } catch (err) {
+                addMessage('ai', 'Failed to load history item.');
+            }
+        }
+
+        function scrollToBottom() {
+            const scroller = document.getElementById('chat-scroller');
+            scroller.scrollTop = scroller.scrollHeight;
+        }
+
+        // --- Google Auth ---
+        function handleCredentialResponse(response) {
+            const base64Url = response.credential.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+
+            userData = JSON.parse(jsonPayload);
+            updateUIForAuth();
+        }
+
+        function updateUIForAuth() {
+            document.getElementById('login-container').classList.add('hidden');
+            document.getElementById('user-profile').classList.remove('hidden');
+            document.getElementById('user-name').innerText = userData.name;
+            document.getElementById('user-avatar').src = userData.picture;
+        }
+
+        function logout() {
+            userData = null;
+            document.getElementById('login-container').classList.remove('hidden');
+            document.getElementById('user-profile').classList.add('hidden');
+            google.accounts.id.disableAutoSelect();
+        }
+    </script>
+</body>
+</html>
