@@ -81,7 +81,7 @@ def read_root():
     index_path = os.path.join(FRONTEND_DIR, "index.html")
     if os.path.exists(index_path):
         return FileResponse(index_path)
-    return "RecruitFlow AI API is running. Frontend not found."
+    return f"RecruitFlow AI API is running. Frontend not found at: {index_path}. Current DIR: {os.getcwd()}"
 
 @app.get("/health")
 def health_check():
