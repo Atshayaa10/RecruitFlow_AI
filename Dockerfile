@@ -9,20 +9,23 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install
-COPY backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY backend/requirements.txt /app/backend/requirements.txt
+RUN pip install --no-cache-dir -r /app/backend/requirements.txt
 
-# Copy backend and frontend
-COPY backend/ ./backend/
-COPY frontend/ ./frontend/
+# Copy backend and frontend to absolute paths
+COPY backend/ /app/backend/
+COPY frontend/ /app/frontend/
 
 # Set working directory to backend to run the app
 WORKDIR /app/backend
 
 # Create a placeholder for the database
-RUN touch recruitment.db
+RUN touch /app/backend/recruitment.db
 
 EXPOSE 8000
+
+# Set environment variable to ensure logs are visible
+ENV PYTHONUNBUFFERED=1
 
 # Start FastAPI
 CMD ["python", "main.py"]

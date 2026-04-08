@@ -78,10 +78,18 @@ if not os.path.exists(FRONTEND_DIR):
 
 @app.get("/", response_class=HTMLResponse)
 def read_root():
+    # Explicitly check Render's expected absolute path /app/frontend/index.html
+    # FALLBACK_DIR = "/app/frontend"
     index_path = os.path.join(FRONTEND_DIR, "index.html")
     if os.path.exists(index_path):
         return FileResponse(index_path)
-    return f"RecruitFlow AI API is running. Frontend not found at: {index_path}. Current DIR: {os.getcwd()}"
+    
+    # Second fallback for containerized environment
+    container_path = "/app/frontend/index.html"
+    if os.path.exists(container_path):
+        return FileResponse(container_path)
+
+    return f"RecruitFlow AI API is running. Frontend not found at: {index_path} or {container_path}. Current DIR: {os.getcwd()}"
 
 @app.get("/health")
 def health_check():
