@@ -1,32 +1,41 @@
-# Project Successfully Pushed with AgentOps Dashboard
+# RecruitFlow AI Optimized for Render
 
-The **RecruitFlow AI** project is now fully synced with your GitHub repository, including the requested trace dashboard documentation.
+I have successfully optimized the project for **One-Click Deployment on Render**. The entire application is now consolidated into a high-performance single-container architecture.
 
-## 📁 Repository Update
-- **Remote URL**: [https://github.com/Atshayaa10/RecruitFlow_AI.git](https://github.com/Atshayaa10/RecruitFlow_AI.git)
+## 🚀 Deployment Status
+- **GitHub Repository**: [https://github.com/Atshayaa10/RecruitFlow_AI.git](https://github.com/Atshayaa10/RecruitFlow_AI.git)
+- **Deployment Strategy**: Unified Single Container (FastAPI serving UI).
 
-## ✅ Final Additions
+## ✅ What I've Changed
 
-### 1. AgentOps Trace Dashboard Folder
-Created a new folder **`AgentOps Trace Dashboard`** containing the two dashboard screenshots you provided. This serves as a reference for your agent's performance and observability metrics:
-- **`image.png`**: Trace duration and span distribution.
-- **`image copy.png`**: Analytics overview and cost distribution.
+### 1. Unified Single-Container Architecture
+Render works best with individual web services. I have merged the frontend and backend into a single production Docker container.
+- **[Dockerfile](file:///c:/Users/atsha/Downloads/recruitment_automation/Dockerfile)**: Rebuilt to bundle the UI and API together.
+- **`backend/main.py`**: Updated to serve the premium interface at the root `/` URL while still handling all API requests.
 
-### 2. Full Repository Sync
-The entire codebase, including the latest fixes for:
-- Precision match percentages.
-- Bulleted interview strategies.
-- Corrected UI interactions.
-...has been pushed to the `main` branch.
+### 2. Render Blueprint (`render.yaml`)
+I've added a **Render Blueprint** file. This means when you connect your repo to Render, it will automatically:
+- Detect the correct Docker environment.
+- Provision a Web Service with the right names.
+- Pre-set the required environment variables.
 
-### 3. Professional README.md
-Your GitHub homepage now features a detailed guide on the multi-agent architecture, setup instructions, and the tech stack.
+### 3. Detailed Deployment Guide
+The **[deployment_guide.md](file:///c:/Users/atsha/Downloads/recruitment_automation/deployment_guide.md)** now contains a specific step-by-step section for Render.
 
 ---
 
-## 📺 Next Steps
-- **Public Deployment**: Your project is now ready to be deployed to a public cloud provider.
-- **Live Monitoring**: Continue using [AgentOps](https://app.agentops.ai/) to monitor your agents' runs in real-time.
+## 📥 Your Next Steps on Render
+
+1.  **Open [Render Dashboard](https://dashboard.render.com/)**.
+2.  **New + > Web Service**.
+3.  Connect the `Atshayaa10/RecruitFlow_AI` repository.
+4.  Render will find the `render.yaml` and prompt you for:
+    - `GROQ_API_KEY`
+    - `AGENTOPS_API_KEY`
+5.  Click **Deploy**, and your site will be live at a public `https://...` URL!
+
+> [!IMPORTANT]
+> **Health Check**: I've configured a `/health` endpoint so Render can monitor your service's uptime automatically.
 
 > [!TIP]
-> **View on GitHub**: You can now visit your repository online to verify that all folders, including the `AgentOps Trace Dashboard`, are correctly uploaded.
+> **Live Observability**: Once live, your AgentOps dashboard will begin receiving traces from your production URL immediately.

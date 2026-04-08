@@ -41,6 +41,7 @@ import traceback
 from agents import recruitment_pipeline
 from utils import extract_text_from_pdf
 from database import init_db, save_analysis, get_history, get_analysis_detail
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, HTMLResponse
 import os
 
