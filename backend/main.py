@@ -30,14 +30,16 @@ print(f"DEBUG: GROQ_API_KEY present: {bool(GROQ_API_KEY)}")
 
 # Nuclear Stabilization: Disable all magic/automatic instrumentors to stop circular import crashes.
 # We will rely on our manual decorators (@agentops.track_tool) in agents.py.
-if AGENTOPS_API_KEY:
-    try:
-        agentops.init(api_key=AGENTOPS_API_KEY, default_tags=["recruitment-automation"], instrument_llm_calls=False)
-        print("DEBUG: AgentOps initialized successfully.")
-    except Exception as e:
-        print(f"WARNING: AgentOps failed to initialize: {e}")
-else:
-    print("WARNING: AGENTOPS_API_KEY not found. Monitoring disabled.")
+# --- AGENTOPS DISABLED FOR MEMORY STABILITY ---
+# if AGENTOPS_API_KEY:
+#     try:
+#         agentops.init(api_key=AGENTOPS_API_KEY, default_tags=["recruitment-automation"], instrument_llm_calls=False)
+#         print("DEBUG: AgentOps initialized successfully.")
+#     except Exception as e:
+#         print(f"WARNING: AgentOps failed to initialize: {e}")
+# else:
+#     print("WARNING: AGENTOPS_API_KEY not found. Monitoring disabled.")
+print("DEBUG: AgentOps is temporarily disabled to prevent Render OOM/Thread crashes.")
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -91,7 +93,9 @@ from pathlib import Path
 
 # Absolute path resolution
 BASE_DIR = Path(__file__).resolve().parent.parent
-FRONTEND_DIR = BASE_DIR / "frontend"
+# Hardcoded container path for maximum reliability on Render
+FRONTEND_DIR = Path("/app/frontend")
+print(f"DEBUG: FRONTEND_DIR set to {FRONTEND_DIR}")
 
 @app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
 def read_root(request: Request):
