@@ -1,13 +1,12 @@
-# GitHub Initialization & Push
+# Render Deployment (Single Container)
 
-- [x] Repository Setup
-    - [x] Create README.md with architecture and setup info
-    - [x] Create .gitignore for security
-    - [x] Initialize git repository (`git init`)
-    - [x] Link to remote origin
-- [x] Staging & Commit
-    - [x] Stage all project files
-    - [x] Commit with descriptive message
-- [x] Push to GitHub
-    - [x] Set branch to `main`
-    - [x] Push to `origin main`
+- [x] Application Consolidation
+    - [x] Update `backend/main.py` to serve static files/UI
+    - [x] Create root-level production `Dockerfile`
+    - [x] Create `render.yaml` Blueprint
+- [x] Documentation
+    - [x] Update `deployment_guide.md` with Render steps
+    - [x] Update `README.md`
+- [ ] Deployment Push
+    - [x] Commit changes
+    - [x] Push to GitHub

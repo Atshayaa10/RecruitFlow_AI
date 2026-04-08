@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: recruitflow-ai
+    env: docker
+    plan: free # or starter
+    region: oregon # or your preferred region
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: AGENTOPS_API_KEY
+        sync: false
+      - key: MODEL_NAME
+        value: llama-3.3-70b-versatile
+    autoDeploy: true
+    healthCheckPath: /health

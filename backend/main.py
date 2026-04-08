@@ -41,8 +41,8 @@ import traceback
 from agents import recruitment_pipeline
 from utils import extract_text_from_pdf
 from database import init_db, save_analysis, get_history, get_analysis_detail
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
+import os
 
 # Initialize DB on startup
 init_db()
@@ -68,6 +68,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Path to frontend
+FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
+if not os.path.exists(FRONTEND_DIR):
+    # Fallback for Docker environment where frontend might be at /app/frontend
+    FRONTEND_DIR = "/app/frontend"
+
+@app.get("/", response_class=HTMLResponse)
+def read_root():
+    index_path = os.path.join(FRONTEND_DIR, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return "RecruitFlow AI API is running. Frontend not found."
 
 @app.get("/health")
 def health_check():
@@ -158,7 +171,12 @@ async def analyze_recruitment(
             agentops.end_session(end_state="Fail")
         raise HTTPException(status_code=500, detail=str(e))
 
-# Frontend mounting removed as it is served by Nginx in Docker setup
+# Serve static files (if any in a separate folder inside frontend)
+if os.path.exists(FRONTEND_DIR):
+    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+
+# Frontend mounting removed as it is served by Nginx in local Docker setup,
+# but handled above for unified cloud deployment.
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

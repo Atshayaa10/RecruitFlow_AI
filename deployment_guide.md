@@ -6,41 +6,28 @@ This guide explains how to deploy the fully Dockerized RecruitFlow AI applicatio
 - A cloud provider account (e.g., [Fly.io](https://fly.io/), [Railway](https://railway.app/), or any VPS with Docker installed).
 - Your `AGENTOPS_API_KEY` and `GROQ_API_KEY`.
 
-## Option 1: Quick Deployment with Railway (Recommended)
+## Option 1: One-Click Deploy to Render (Recommended)
 
-1.  **Fork/Upload**: Upload the project to a GitHub repository.
-2.  **New Project**: In Railway.app, create a "New Project" and select "GitHub Repo".
-3.  **Docker Compose**: Railway will automatically detect the `docker-compose.yml`.
-4.  **Environment Variables**: Add the following variables to the **backend** service in Railway:
+Render is the simplest way to get RecruitFlow AI live. We have optimized the project into a **Unified Single Container** that hosts both the frontend and backend.
+
+### Steps:
+1.  **Push to GitHub**: Ensure your latest changes (including the new root `Dockerfile` and `render.yaml`) are pushed to your GitHub repo.
+2.  **Create New Web Service**:
+    - Log in to [Render](https://dashboard.render.com/).
+    - Click **New +** > **Web Service**.
+    - Connect your GitHub repository.
+3.  **Configure**:
+    - **Name**: `recruitflow-ai`
+    - **Environment**: `Docker` (Render will automatically detect the root `Dockerfile`).
+4.  **Environment Variables**: Add the following in the "Environment" tab:
     - `GROQ_API_KEY`: Your Groq API key.
     - `AGENTOPS_API_KEY`: Your AgentOps API key.
-    - `MODEL_NAME`: e.g., `llama-3.3-70b-versatile`.
-5.  **Networking**: Railway will provide a public URL for the `frontend` service (port 80).
+    - `MODEL_NAME`: `llama-3.3-70b-versatile`
+5.  **Deploy**: Click **Create Web Service**. Render will build the image and provide a public `https://...` URL.
 
-## Option 2: VPS with Docker Compose
+---
 
-If you have a Linux VPS (Ubuntu/Debian):
-
-1.  **Clone the Repo**:
-    ```bash
-    git clone https://github.com/your-repo/recruitment_automation.git
-    cd recruitment_automation
-    ```
-2.  **Setup Environment**:
-    Create `backend/.env` and add your keys.
-3.  **Start the Stack**:
-    ```bash
-    docker compose up -d --build
-    ```
-4.  **Access**:
-    The app will be available at `http://YOUR_SERVER_IP:8080`.
-
-## Option 3: Unified Single-Container Deployment (Fly.io)
-
-For the simplest public URL, you can merge the frontend and backend into a single container:
-
-1.  **Update `main.py`**: Ensure `StaticFiles` mounting is active.
-2.  **Deploy Backend**: Fly.io will serve the FastAPI app, which in turn serves the UI.
+## Option 3: VPS with Docker Compose (Local/Private)
 
 ---
 
