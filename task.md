@@ -1,8 +1,8 @@
-# Render Network Stability Fix
+# Production Protocol Fix (Render)
 
-- [/] Dynamic Port Configuration
-    - [ ] Update `backend/main.py` to use Render's dynamic `PORT`
-    - [ ] Update `Dockerfile` for Render compatibility
+- [/] Health Check & Path Hardening
+    - [ ] Update root route to support `HEAD` requests
+    - [ ] Implement robust absolute path resolution using `pathlib`
 - [ ] Final Deployment
     - [ ] Commit and Push changes
-    - [ ] Verify Render service comes online (Live 🎉)
+    - [ ] Verify Render health check returns `200 OK`

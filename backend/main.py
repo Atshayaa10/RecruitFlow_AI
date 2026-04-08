@@ -70,26 +70,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Path to frontend
-FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
-if not os.path.exists(FRONTEND_DIR):
-    # Fallback for Docker environment where frontend might be at /app/frontend
-    FRONTEND_DIR = "/app/frontend"
+from pathlib import Path
 
-@app.get("/", response_class=HTMLResponse)
-def read_root():
-    # Explicitly check Render's expected absolute path /app/frontend/index.html
-    # FALLBACK_DIR = "/app/frontend"
-    index_path = os.path.join(FRONTEND_DIR, "index.html")
-    if os.path.exists(index_path):
+# Absolute path resolution
+BASE_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIR = BASE_DIR / "frontend"
+
+@app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
+def read_root(request: Request):
+    # If it's a HEAD request (like Render's health check), just return 200 OK
+    if request.method == "HEAD":
+        return HTMLResponse(content="", status_code=200)
+
+    index_path = FRONTEND_DIR / "index.html"
+    if index_path.exists():
         return FileResponse(index_path)
     
-    # Second fallback for containerized environment
-    container_path = "/app/frontend/index.html"
-    if os.path.exists(container_path):
-        return FileResponse(container_path)
+    # Fallback for absolute container path
+    fallback_path = Path("/app/frontend/index.html")
+    if fallback_path.exists():
+        return FileResponse(fallback_path)
 
-    return f"RecruitFlow AI API is running. Frontend not found at: {index_path} or {container_path}. Current DIR: {os.getcwd()}"
+    return f"RecruitFlow AI API is running. Frontend not found. Checked: {index_path} and {fallback_path}"
 
 @app.get("/health")
 def health_check():
