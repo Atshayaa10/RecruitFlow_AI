@@ -1,5 +1,4 @@
 import os
-import agentops
 from typing import TypedDict, List, Annotated, Optional
 from langchain_groq import ChatGroq
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
@@ -64,7 +63,6 @@ class RankedShortlist(BaseModel):
 
 # --- Agent Nodes ---
 
-@agentops.track_tool(name="JD Parser")
 def jd_parser_node(state: AgentState):
     """Extracts structured data from the job description."""
     print("Agent: JDParser is analyzing the job description...")
@@ -73,7 +71,6 @@ def jd_parser_node(state: AgentState):
     result = structured_llm.invoke(prompt)
     return {"parsed_jd": result.dict()}
 
-@agentops.track_tool(name="Multi-Candidate Screener")
 def candidate_screener_node(state: AgentState):
     """Parses and scores each candidate individually."""
     print(f"Agent: CandidateScreener is processing {len(state['resumes'])} candidates...")
@@ -128,7 +125,6 @@ def candidate_screener_node(state: AgentState):
         
     return {"candidates": candidates}
 
-@agentops.track_tool(name="Ranking Agent")
 def ranking_agent_node(state: AgentState):
     """Compares all evaluated candidates and ranks them."""
     print("Agent: RankingAgent is producing the final shortlist...")

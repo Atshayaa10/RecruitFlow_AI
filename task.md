@@ -1,0 +1,4 @@
+- [ ] Scrub AgentOps decorators and imports from `agents.py`
+- [ ] Clean up redundant AgentOps logic in `main.py`
+- [ ] Update `Dockerfile` to use standard Uvicorn CMD
+- [ ] Verify deployment on Render

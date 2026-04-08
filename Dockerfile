@@ -22,3 +22,13 @@ WORKDIR /app/backend
 # Create a placeholder for the database
 RUN touch /app/backend/recruitment.db
 
+# Ensure logs are visible and real-time
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONIOENCODING=utf-8
+
+# Port hint for Render
+EXPOSE 10000
+
+# Start Gunicorn with Uvicorn workers for production stability
+# Use shell form to allow environment variable expansion (for Render's dynamic PORT)
+CMD gunicorn -w 1 -k uvicorn.workers.UvicornWorker main:app --bind 0.0.0.0:${PORT:-10000} --timeout 120

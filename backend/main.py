@@ -14,32 +14,13 @@ logging.getLogger("agentops").setLevel(logging.ERROR)
 #         sys.stderr = codecs.getwriter("utf-8")(sys.stderr.detach())
 
 import os
-import agentops
 import time
 from dotenv import load_dotenv
 from typing import TypedDict, List, Annotated, Optional
 from datetime import datetime
 
-# Initialize AgentOps at the very beginning
-load_dotenv()
-AGENTOPS_API_KEY = os.getenv("AGENTOPS_API_KEY")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-
-print(f"DEBUG: AGENTOPS_API_KEY present: {bool(AGENTOPS_API_KEY)}")
-print(f"DEBUG: GROQ_API_KEY present: {bool(GROQ_API_KEY)}")
-
-# Nuclear Stabilization: Disable all magic/automatic instrumentors to stop circular import crashes.
-# We will rely on our manual decorators (@agentops.track_tool) in agents.py.
-# --- AGENTOPS DISABLED FOR MEMORY STABILITY ---
-# if AGENTOPS_API_KEY:
-#     try:
-#         agentops.init(api_key=AGENTOPS_API_KEY, default_tags=["recruitment-automation"], instrument_llm_calls=False)
-#         print("DEBUG: AgentOps initialized successfully.")
-#     except Exception as e:
-#         print(f"WARNING: AgentOps failed to initialize: {e}")
-# else:
-#     print("WARNING: AGENTOPS_API_KEY not found. Monitoring disabled.")
-print("DEBUG: AgentOps is temporarily disabled to prevent Render OOM/Thread crashes.")
+# --- AGENTOPS REMOVED FOR STABILITY ---
+print("DEBUG: AgentOps has been completely removed from the pipeline.")
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -186,11 +167,8 @@ async def analyze_recruitment(
         user_id = "default_user" 
         save_analysis(user_id, jd_text, top_resume_name, top_match_percentage, result)
 
-        # Mark session as success explicitly for AgentOps dashboard
-        if AGENTOPS_API_KEY:
-            agentops.end_session(end_state="Success")
-            # Wait for background flush on Windows
-            time.sleep(1)
+        # Mark session as success explicitly (Internal status)
+        print(f"[{datetime.now()}] Analysis completed successfully")
 
         return {
             "status": "success",
@@ -199,8 +177,6 @@ async def analyze_recruitment(
     except Exception as e:
         print(f"Error during analysis: {e}")
         traceback.print_exc()
-        if AGENTOPS_API_KEY:
-            agentops.end_session(end_state="Fail")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Serve static files (if any in a separate folder inside frontend)

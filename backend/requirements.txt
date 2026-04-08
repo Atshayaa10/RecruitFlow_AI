@@ -3,9 +3,9 @@ uvicorn
 python-dotenv
 langgraph
 langchain-groq
-agentops>=0.4.21
 pydantic
 pypdf
 python-multipart
 langchain-core
 langchain-community
+gunicorn
