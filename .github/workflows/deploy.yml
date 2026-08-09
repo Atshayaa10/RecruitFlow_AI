@@ -1,0 +1,54 @@
+# Installed automatically by Opalite Auto-Healer.
+# Demo mode (no DEPLOY_HOOK secret): simulates a deploy and goes green.
+# Real mode: set repo secrets DEPLOY_HOOK (+ optional HEALTH_URL) for a real
+# deploy with health-check and auto-rollback.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to production
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Deploy
+        env:
+          DEPLOY_HOOK: ${{ secrets.DEPLOY_HOOK }}
+        run: |
+          if [ -z "$DEPLOY_HOOK" ]; then
+            echo "🟡 DEMO MODE: no DEPLOY_HOOK secret — simulating a successful deploy of ${GITHUB_SHA}."
+            exit 0
+          fi
+          echo "🚀 Triggering real deployment..."
+          curl -fsS -X POST "$DEPLOY_HOOK"
+      - name: Health check
+        env:
+          HEALTH_URL: ${{ secrets.HEALTH_URL }}
+        run: |
+          if [ -z "$HEALTH_URL" ]; then echo "No HEALTH_URL set; skipping."; exit 0; fi
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" || echo "000")
+            if [ "$code" = "200" ]; then echo "Healthy after ${i} attempts."; exit 0; fi
+            echo "Attempt $i: got $code, retrying in 10s..."; sleep 10
+          done
+          echo "::error::Service never became healthy."; exit 1
+      - name: Auto-rollback on failure
+        if: failure()
+        env:
+          DEPLOY_HOOK: ${{ secrets.DEPLOY_HOOK }}
+        run: |
+          echo "::warning::Deploy unhealthy — reverting the last commit on main."
+          git config user.name  "opalite-bot"
+          git config user.email "opalite-bot@users.noreply.github.com"
+          git revert --no-edit HEAD
+          git push origin main
+          if [ -n "$DEPLOY_HOOK" ]; then curl -fsS -X POST "$DEPLOY_HOOK" || true; fi
